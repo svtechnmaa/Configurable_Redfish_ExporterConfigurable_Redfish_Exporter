@@ -1,0 +1,5 @@
+pyyaml
+jsonpath
+Jinja2
+prometheus-client
+
