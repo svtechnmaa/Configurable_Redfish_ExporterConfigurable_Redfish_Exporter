@@ -240,26 +240,46 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
             if i == 'Id':
                 continue
             if not isinstance(schemaCurrent[i],dict):
-                newJSONPath = re.sub(elements[-1], i, abspath)
-                # logging.info("newJSONPath: %s" % newJSONPath)
+                newJSONPath = re.sub(elements[-1], schemaCurrent[i], abspath)
+                logging.info("newJSONPath: %s" % newJSONPath)
                 result = jsonpathCollector(dataRaw,newJSONPath)
-                # logging.info("Result: %s" % result)
+                logging.info("Result: %s" % result)
                 if result is not False:
+                    if i == 'Status':
+                        if isinstance(result[0],dict):
+                            if 'State' not in result[0]:
+                                result[0].update({'State':'Unknown'})
+                            if 'Health' not in result[0]:
+                                result[0].update({'Health':'Unknown'})
+                        elif isinstance(result[0],str):
+                            stateTemp = result[0]
+                            result[0] = dict()
+                            result[0].update({'State':stateTemp,'Health':'Unknown'})
+                        else:
+                            logging.error("It's a bug for Status define: %s" % result[0])
                     newDict.update({i:result[0]})
                 else:
                     newDict.update({i:'Unknown'})
         current = current.update(newDict)
     newData = fixListConverter(dataTemplate)
+    with open('/tmp/%s_rawdata.txt' % serverAddress, 'w') as file:
+        json.dump(dataRaw, file)
+    with open('/tmp/%s_newdata.txt' % serverAddress, 'w') as file:
+        json.dump(newData, file)
     return dataRaw, newData
 
 if __name__ == '__main__':
-    serverAddress='10.97.12.3'
-    username='juniper'
-    password='juniper@123'
+    # serverAddress='10.97.12.3'
+    # username='juniper'
+    # password='juniper@123'
 
     # serverAddress='10.98.11.12'
     # username='juniper'
     # password='juniper@123'
+
+    serverAddress='localhost'
+    username='juniper'
+    password='juniper@123'
 
     # serverAddress='10.1.32.27'
     # username='administrator'
@@ -292,6 +312,6 @@ if __name__ == '__main__':
     # logging.basicConfig(format=logFormat, level=logLevel.upper())
 
     dataRaw,newData = dataReconstruction(serverAddress,username,password,templateDir,logLevel=logLevel)
-    logging.info(dataRaw)
-    logging.info(newData)
+    # logging.info(dataRaw)
+    # logging.info(newData)
 

@@ -161,7 +161,6 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                             labelList.append(result[0])
                                         else:
                                             labelList.append('Unknown')
-                                            logging.error("[%s] result return Failed")
                                             continue
                                 logging.info("[%s] List Label: %s" % (serverAddress,labelList))
                                 if 'State' in metric['Result'] or 'Health' in metric['Result']:
@@ -171,7 +170,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                     state = 'Status.' + metric['Result']
                                     newJSONPath = re.sub('Id', state, memberID)
                                     logging.info("[%s] newJSONPath: %s" % (serverAddress,newJSONPath))
-                                    value = jsonpathCollector(firstPointData,str(newJSONPath))[0]
+                                    value = jsonpathCollector(firstPointData,str(newJSONPath))
                                     if value is False:
                                         logging.error("[%s] Value isn't existed: %s" % (serverAddress,value))
                                         codeNumber = 999
@@ -179,8 +178,8 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                         logging.warning("[%s] Value is None: %s" % (serverAddress,value))
                                         codeNumber = 99
                                     else:
-                                        if value.upper() in metric['StatusCode']:
-                                            codeNumber = metric['StatusCode'][value.upper()]
+                                        if value[0].upper() in metric['StatusCode']:
+                                            codeNumber = metric['StatusCode'][value[0].upper()]
                                             logging.info("[%s] Value and CodeNumber: %s and %s" % (serverAddress,value,codeNumber))
                                         else:
                                             logging.error("[%s] Maybe value isn't correct: %s" % (serverAddress,value))
@@ -192,7 +191,11 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                 #     value = jsonpathCollector(firstPointData,str(newJSONPath))[0]
                                 else:
                                     newJSONPath = re.sub('Id', metric['Result'], memberID)
-                                    value = jsonpathCollector(firstPointData,str(newJSONPath))[0]
+                                    value = jsonpathCollector(firstPointData,str(newJSONPath))
+                                    if value is False:
+                                        componentMetrics[metric['Name']].labels(*labelList).set(999)
+                                    else:
+                                        value =value[0]
                                     logging.info("Value type: %s" % type(value))
                                     if isinstance(value,int) or isinstance(value,float):
                                         componentMetrics[metric['Name']].labels(*labelList).set(float(value))       

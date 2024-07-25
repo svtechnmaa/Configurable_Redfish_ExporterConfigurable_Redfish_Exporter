@@ -162,15 +162,15 @@ Data:
     Fans:
       Id: $.Thermal.Fans[*].FanName
       FanName: FanName
-      Reading: Reading
-      ReadingUnits: ReadingUnits
+      Reading: CurrentReading
+      ReadingUnits: Units
       Status: Status
     Temperatures:
       Id: $.Thermal.Temperatures[*].Name
       Name: Name
       PhysicalContext: PhysicalContext
       ReadingCelsius: ReadingCelsius
-      SensorNumber: SensorNumber
+      SensorNumber: Number
       Status: Status
       UpperThresholdCritical: UpperThresholdCritical
       UpperThresholdFatal: UpperThresholdFatal
