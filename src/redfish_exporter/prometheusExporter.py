@@ -4,15 +4,12 @@ import yaml
 import json
 from os import path
 from jsonpath_ng.ext import parse 
-# from physical_exporter import prometheus_metrics
-# import prometheus_metrics
 from jinja2 import Template
 from yaml.loader import SafeLoader
 from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn,TCPServer
-# from Configurable_Redfish_Exporter.dataReconstruction import dataReconstruction, readYAMLTemplate
-from dataReconstruction import dataReconstruction
+from redfish_exporter.dataReconstruction import dataReconstruction
 from prometheus_client import generate_latest, Summary, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR, Gauge, CollectorRegistry
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
@@ -99,8 +96,6 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                 cacheTimeout = qs['cachetimeout'][0]
                 # logging.info("Username: %s: %s" % (username,serverAddress))
                 logging.info("[%s] Received prometheus query from %s to gather health-check information" % (serverAddress,str(self.address_string())))
-                # logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
-                # logging.basicConfig(format=logFormat, level=(self.loglevel).upper())
             except KeyError as e:
                 logging.error("[%s] Missing parameter %s" % (serverAddress, e))
                 return self._sendContent(f"404: {url}", status=404)
@@ -177,6 +172,9 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                     elif value is None:
                                         logging.warning("[%s] Value is None: %s" % (serverAddress,value))
                                         codeNumber = 99
+                                    elif value[0] is None:
+                                        logging.warning("[%s] Value[0] is None: %s" % (serverAddress,value[0]))
+                                        codeNumber = 99
                                     else:
                                         if value[0].upper() in metric['StatusCode']:
                                             codeNumber = metric['StatusCode'][value[0].upper()]
@@ -185,10 +183,6 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                             logging.error("[%s] Maybe value isn't correct: %s" % (serverAddress,value))
                                             codeNumber = 999
                                     componentMetrics[metric['Name']].labels(*labelList).set(float(codeNumber))
-                                # elif 'Value' in metric['Result']:
-                                #     newJSONPath = re.sub('Id', metric['Result']['Value'], memberID)
-                                #     logging.info("[%s] newJSONPath: %s" % (serverAddress,newJSONPath))
-                                #     value = jsonpathCollector(firstPointData,str(newJSONPath))[0]
                                 else:
                                     newJSONPath = re.sub('Id', metric['Result'], memberID)
                                     value = jsonpathCollector(firstPointData,str(newJSONPath))
@@ -229,14 +223,11 @@ class prometheusExporter(object):
         # self._cachetimeout = cachetimeout
 
     def run(self):
-        # logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
-        # logging.basicConfig(format=logFormat, level=(self._loglevel).upper())
         logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=(self._loglevel).upper())
         with ThreadedTCPServer(("", self._port), ManualRequestHandler) as httpd:
             ManualRequestHandler.endpoint=self._endpoint
             ManualRequestHandler.loglevel=self._loglevel
             ManualRequestHandler.templatedir=self._templatedir
-            # ManualRequestHandler.cacheTimeout=self._cachetimeout
             try:
                 logging.info("Serving at port " + str(self._port))
                 threadServer=Thread(httpd.serve_forever())

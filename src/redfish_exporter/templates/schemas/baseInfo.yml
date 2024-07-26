@@ -20,6 +20,8 @@ Model:
     Dell:
         R750: DellPowerEdgeR750.yml
         R650: DellPowerEdgeR650.yml
+        R630: DellPowerEdgeR630.yml
+        R6515: DellPowerEdgeR6515.yml
 
 # HPEGen9:
 #     ArrayController: 'https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}/SmartStorage/ArrayControllers'
