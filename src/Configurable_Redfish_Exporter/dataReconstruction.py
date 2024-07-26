@@ -59,7 +59,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                 logging.error("May be $jsonpath for $chain level was wrong")
                 return
             for i in chainURIs:
-                chainURL = 'https://%s/%s' % (serverAddress,i)
+                chainURL = 'https://%s%s' % (serverAddress,i)
                 currentDataRaw = requests.get(chainURL, verify=False, auth=(username, password)).json()
         else:
             logging.error("If you define $chain, you need define $jsonpath in $chain level")
@@ -87,7 +87,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                         logging.info("Find %s" % i)
                         childName.append(i)
                 for i in memberURIs:
-                    memberURL = 'https://%s/%s' % (serverAddress,i)
+                    memberURL = 'https://%s%s' % (serverAddress,i)
                     tempRaw = requests.get(memberURL, verify=False, auth=(username, password)).json()
                     for child in childName:
                         if isinstance(currentSchema[child],dict):
@@ -209,7 +209,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         logging.debug("Working with %s" % (componentName))
         dataRaw[componentName] = dataRawCollector(serverAddress,username,password,metadata[componentName])
     # return dataRaw,dataNewSchema
-
+    logging.info("dataRaw: %s" % dataRaw)
     newDataRaw = dict()
     idList = jsonpathCollector(dataNewSchema,str("$..Id"),output='fullpath&value')
     # logging.info("Id: %s" % idList)
@@ -236,7 +236,8 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         newDict = dict()
         newDict['Id'] = newDataRaw[abspath]
         for i in schemaCurrent:
-            # logging.info("Data -2: %s" % i)
+            logging.info("Current Schema: %s" % schemaCurrent)
+            logging.info("Data -2: %s" % i)
             if i == 'Id':
                 continue
             if not isinstance(schemaCurrent[i],dict):
@@ -277,9 +278,9 @@ if __name__ == '__main__':
     # username='juniper'
     # password='juniper@123'
 
-    serverAddress='localhost'
-    username='juniper'
-    password='juniper@123'
+    serverAddress='10.155.20.7'
+    username='root'
+    password='Juniper@123'
 
     # serverAddress='10.1.32.27'
     # username='administrator'
@@ -313,5 +314,5 @@ if __name__ == '__main__':
 
     dataRaw,newData = dataReconstruction(serverAddress,username,password,templateDir,logLevel=logLevel)
     # logging.info(dataRaw)
-    # logging.info(newData)
+    logging.info(newData)
 
