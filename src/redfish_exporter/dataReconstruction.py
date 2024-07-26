@@ -116,7 +116,6 @@ def fixListConverter(data):
 def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
     logging.basicConfig(format=logFormat, level=logLevel.upper())
-    # logging.basicConfig(format='%(asctime)s [%(levelname)s] %(message)s', level=loglevel.upper())
     base = templateDir + "schemas/baseInfo.yml"
     baseURL=readYAMLTemplate(base, {'serverAddress': serverAddress})
     vendorURI= None
@@ -274,45 +273,15 @@ if __name__ == '__main__':
     # username='juniper'
     # password='juniper@123'
 
-    # serverAddress='10.98.11.12'
-    # username='juniper'
-    # password='juniper@123'
-
-    serverAddress='10.155.20.7'
-    username='root'
-    password='Juniper@123'
-
-    # serverAddress='10.1.32.27'
-    # username='administrator'
-    # password='Admin@123'
-
-    # serverAddress='10.98.11.11'
-    # username='juniper'
-    # password='juniper@123'
-
-    # serverAddress='10.98.11.1'
-    # username='juniper'
-    # password='juniper@123'
-
-    # serverAddress='10.98.11.2'
-    # username='juniper'
-    # password='juniper@123'
-
-    # serverAddress='10.98.11.4'
-    # username='juniper'
-    # password='juniper@123'
-
-    # serverAddress='10.98.11.6'
-    # username='juniper'
-    # password='juniper@123'
+    serverAddress='10.98.11.12'
+    username='juniper'
+    password='juniper@123'
 
     logLevel='info'
     templateDir='./templates/'
 
-    # logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
-    # logging.basicConfig(format=logFormat, level=logLevel.upper())
 
     dataRaw,newData = dataReconstruction(serverAddress,username,password,templateDir,logLevel=logLevel)
     # logging.info(dataRaw)
-    logging.info(newData)
+    # logging.info(newData)
 

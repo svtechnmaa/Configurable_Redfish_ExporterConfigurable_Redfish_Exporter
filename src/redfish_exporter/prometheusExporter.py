@@ -157,14 +157,14 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                         else:
                                             labelList.append('Unknown')
                                             continue
-                                logging.info("[%s] List Label: %s" % (serverAddress,labelList))
+                                logging.debug("[%s] List Label: %s" % (serverAddress,labelList))
                                 if 'State' in metric['Result'] or 'Health' in metric['Result']:
                                     if 'StatusCode' not in metric:
                                         logging.error("[%s] Can't find StatusCode, please check again!" % (serverAddress))
                                         continue
                                     state = 'Status.' + metric['Result']
                                     newJSONPath = re.sub('Id', state, memberID)
-                                    logging.info("[%s] newJSONPath: %s" % (serverAddress,newJSONPath))
+                                    logging.debug("[%s] newJSONPath: %s" % (serverAddress,newJSONPath))
                                     value = jsonpathCollector(firstPointData,str(newJSONPath))
                                     if value is False:
                                         logging.error("[%s] Value isn't existed: %s" % (serverAddress,value))
@@ -190,7 +190,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                         componentMetrics[metric['Name']].labels(*labelList).set(999)
                                     else:
                                         value =value[0]
-                                    logging.info("Value type: %s" % type(value))
+                                    logging.debug("Value type: %s" % type(value))
                                     if isinstance(value,int) or isinstance(value,float):
                                         componentMetrics[metric['Name']].labels(*labelList).set(float(value))       
                                     else:
