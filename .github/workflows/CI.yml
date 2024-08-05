@@ -35,7 +35,7 @@ jobs:
         password: '${{ secrets.GITHUB_TOKEN }}'
     - name: Push image to GitHub Container Registry
       run: |
-        docker tag redfish-exporter:latest ghcr.io/${{ github.repository_owner }}/${{ env.REPO }}:v1.${{ github.run_number }}
-        docker tag redfish-exporter:latest ghcr.io/${{ github.repository_owner }}/${{ env.REPO }}:latest
-        docker push ghcr.io/${{ github.repository_owner }}/${{ env.REPO }}:v1.${{ github.run_number }}
-        docker push ghcr.io/${{ github.repository_owner }}/${{ env.REPO }}:latest
+        docker tag redfish-exporter:latest ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.${{ github.run_number }}
+        docker tag redfish-exporter:latest ghcr.io/${{ github.repository_owner }}/redfish-exporter:latest
+        docker push ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.${{ github.run_number }}
+        docker push ghcr.io/${{ github.repository_owner }}/redfish-exporter:latest
