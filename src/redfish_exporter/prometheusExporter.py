@@ -133,7 +133,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                     if metric['Type'] == 'Gauge':
                         componentMetrics[metric['Name']] = Gauge(metric['Name'],metric['Description'],metric['Label'],registry=registry)
                         elements = metric['Datapoint'].split('.')
-                        logging.info("[%s] Split datapoint %s to %s" % (serverAddress,metric['Datapoint'],elements))
+                        logging.debug("[%s] Split datapoint %s to %s" % (serverAddress,metric['Datapoint'],elements))
                         if isinstance(elements,list):
                             firstPointData = collectedData
                         else:
@@ -178,7 +178,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                     else:
                                         if value[0].upper() in metric['StatusCode']:
                                             codeNumber = metric['StatusCode'][value[0].upper()]
-                                            logging.info("[%s] Value and CodeNumber: %s and %s" % (serverAddress,value,codeNumber))
+                                            logging.debug("[%s] Value and CodeNumber: %s and %s" % (serverAddress,value,codeNumber))
                                         else:
                                             logging.error("[%s] Maybe value isn't correct: %s" % (serverAddress,value))
                                             codeNumber = 999
