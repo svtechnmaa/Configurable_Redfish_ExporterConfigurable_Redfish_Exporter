@@ -31,12 +31,10 @@ jobs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.0.${{ github.run_number }}
-    - name: Tag 1.0.x latest version
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.0.x
+        images: ghcr.io/${{ github.repository_owner }}/redfish-exporter
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -48,10 +46,6 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.0.${{ github.run_number }}
-    - name: Push 1.0.x latest version
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        tags: ghcr.io/${{ github.repository_owner }}/redfish-exporter:v1.0.x
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/redfish-exporter:{{version}}
+          ghcr.io/${{ github.repository_owner }}/redfish-exporter:{{major}}.{{minor}}
