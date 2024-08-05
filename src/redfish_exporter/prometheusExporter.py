@@ -196,7 +196,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                     else:
                                         logging.error("[%s] Value %s isn't float: %s" % (serverAddress,metric['Result'],value))
                                         componentMetrics[metric['Name']].labels(*labelList).set(999)   
-                                logging.info("[%s] ID List Collected with in tree %s to %s" % (serverAddress,metric['Datapoint'],labelList))    
+                                logging.debug("[%s] ID List Collected with in tree %s to %s" % (serverAddress,metric['Datapoint'],labelList))    
                             # else: 
                             #     logging.error("[%s] elements[-1] %s and elements[0] %s and memberID %s " % (serverAddress,elements[-1],elements[0],memberID))
                     else:

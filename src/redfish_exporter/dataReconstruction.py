@@ -208,7 +208,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         logging.debug("Working with %s" % (componentName))
         dataRaw[componentName] = dataRawCollector(serverAddress,username,password,metadata[componentName])
     # return dataRaw,dataNewSchema
-    logging.info("dataRaw: %s" % dataRaw)
+    logging.debug("dataRaw: %s" % dataRaw)
     newDataRaw = dict()
     idList = jsonpathCollector(dataNewSchema,str("$..Id"),output='fullpath&value')
     # logging.info("Id: %s" % idList)
@@ -235,15 +235,15 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         newDict = dict()
         newDict['Id'] = newDataRaw[abspath]
         for i in schemaCurrent:
-            logging.info("Current Schema: %s" % schemaCurrent)
-            logging.info("Data -2: %s" % i)
+            logging.debug("Current Schema: %s" % schemaCurrent)
+            logging.debug("Data -2: %s" % i)
             if i == 'Id':
                 continue
             if not isinstance(schemaCurrent[i],dict):
                 newJSONPath = re.sub(elements[-1], schemaCurrent[i], abspath)
-                logging.info("newJSONPath: %s" % newJSONPath)
+                logging.debug("newJSONPath: %s" % newJSONPath)
                 result = jsonpathCollector(dataRaw,newJSONPath)
-                logging.info("Result: %s" % result)
+                logging.debug("Result: %s" % result)
                 if result is not False:
                     if i == 'Status':
                         if isinstance(result[0],dict):
@@ -279,7 +279,6 @@ if __name__ == '__main__':
 
     logLevel='info'
     templateDir='./templates/'
-
 
     dataRaw,newData = dataReconstruction(serverAddress,username,password,templateDir,logLevel=logLevel)
     # logging.info(dataRaw)
