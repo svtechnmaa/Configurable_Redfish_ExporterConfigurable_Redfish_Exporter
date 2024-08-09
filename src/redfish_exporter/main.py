@@ -12,7 +12,7 @@ def main():
     parser.add_argument('--port', type=int, dest='port', default='9814', help='port to bind')
     parser.add_argument('--endpoint', type=str, dest='endpoint', default='/metrics', help='endpoint where metrics will be published')
     parser.add_argument('--loglevel', type=str, dest='loglevel', default="info", help='log level used for debugging')
-    parser.add_argument('--templatedir', type=str, dest='templatedir', default='/opt/templates/', help='cache timeout for renew request')
+    parser.add_argument('--templatedir', type=str, dest='templatedir', default='/opt/Configurable_Redfish_Exporter/templates/', help='cache timeout for renew request')
 
     args = parser.parse_args()
 

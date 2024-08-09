@@ -53,7 +53,7 @@ Data:
     ProcessorHealthRollupStatus: ProcessorSummary.Status.HealthRollup
     SKU: SKU
     SerialNumber: SerialNumber
-    Status: Status.State
+    Status: Status
     SystemType: SystemType
     UUID: UUID
   ArrayController:

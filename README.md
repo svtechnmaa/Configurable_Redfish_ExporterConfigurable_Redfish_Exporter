@@ -51,3 +51,27 @@ You need to have Prometheus Server or Victoria or else, change configuration on 
       static_configs:
       - targets: ["<exporter-ip>:9814"]
     ```
+
+#### Query metrics for testing
+You can use `curl` command to query server for testing data:
+* For example:
+
+    ```bash
+    curl -XGET 'http://<exporter-ip>:<exporter-port>/metrics?cachetimeout=200&config=<file name in config dir>&password=<password>&serverAddress=<server-ip>&username=<username>'
+    ```
+
+#### Compare raw data with new data
+As you know data collected from vendors are different models, so we need convert them to models that defined in schema.
+For troubleshooting, you can go into exporter container with `/bin/sh` and check in `/tmp` directory:
+* For example:
+
+    ```bash
+    docker exec exporter /bin/sh -c 'ls /tmp/'
+    
+    10.97.12.1_newdata.txt    10.97.12.3_newdata.txt    10.97.99.1_newdata.txt
+    10.97.12.1_rawdata.txt    10.97.12.3_rawdata.txt    10.97.99.1_rawdata.txt
+
+    docker exec exporter /bin/sh -c 'cat /tmp/10.97.99.1_rawdata.txt'
+
+    docker exec exporter /bin/sh -c 'cat /tmp/10.97.99.1_newdata.txt'
+    ```

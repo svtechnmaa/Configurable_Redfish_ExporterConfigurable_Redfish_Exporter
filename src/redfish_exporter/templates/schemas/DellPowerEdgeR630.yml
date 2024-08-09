@@ -42,7 +42,7 @@ Data:
     Manufacturer: Manufacturer
     MemoryHealthRollupStatus: MemorySummary.Status.HealthRollup
     TotalSystemMemoryGiB: MemorySummary.TotalSystemMemoryGiB
-    TotalSystemPersistentMemoryGiB: MemorySummary.TotalSystemPersistentMemoryGiB
+    # TotalSystemPersistentMemoryGiB: MemorySummary.TotalSystemPersistentMemoryGiB
     Model: Model
     Name: Name
     PowerState: PowerState
@@ -51,7 +51,8 @@ Data:
     ProcessorHealthRollupStatus: ProcessorSummary.Status.HealthRollup
     SKU: SKU
     SerialNumber: SerialNumber
-    Status: Status.State
+    Status: Status
+    # Health: Status.Health
     SystemType: SystemType
     UUID: UUID
   ArrayController:
@@ -65,7 +66,8 @@ Data:
     InternalPortCount: InternalPortCount
     Location: Location
     LocationFormat: LocationFormat
-    Model: Model
+    Model: StorageControllers.[0].Model
+    Manufacturer: StorageControllers.[0].Manufacturer
     Name: Name
     ReadCachePercent: ReadCachePercent
     SerialNumber: SerialNumber
@@ -75,9 +77,9 @@ Data:
       Id: $.ArrayController[*].PhysicalDrive[*].Id
       SerialNumber: SerialNumber
       BlockSizeBytes: BlockSizeBytes
-      CapacityGB: CapacityGB
+      CapacityBytes: CapacityBytes
       CapacityLogicalBlocks: CapacityLogicalBlocks
-      CapacityMiB: CapacityMiB
+      # CapacityMiB: CapacityMiB
       CarrierApplicationVersion: CarrierApplicationVersion
       InterfaceSpeedMbps: InterfaceSpeedMbps
       InterfaceType: InterfaceType
@@ -86,9 +88,11 @@ Data:
       LocationFormat: LocationFormat
       MediaType: MediaType
       Model: Model
+      Manufacturer: Manufacturer
+      Description: Description
       Name: Name
       PowerOnHours: PowerOnHours
-      SSDEnduranceUtilizationPercentage: SSDEnduranceUtilizationPercentage
+      SSDEnduranceUtilizationPercentage: PredictedMediaLifeLeftPercent
       SerialNumber: SerialNumber
       Status: Status
       UncorrectedReadErrors: UncorrectedReadErrors
@@ -109,7 +113,7 @@ Data:
     PersistentRegionSizeLimitMiB: PersistentRegionSizeLimitMiB
     RankCount: RankCount
     Status: Status
-    VendorID: VendorID
+    # VendorID: VendorID
     VolatileRegionSizeLimitMiB: VolatileRegionSizeLimitMiB
     VolatileSizeMiB: VolatileSizeMiB
   NetworkInterface:

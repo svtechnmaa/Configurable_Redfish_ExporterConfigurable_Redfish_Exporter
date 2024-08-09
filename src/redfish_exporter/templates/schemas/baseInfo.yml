@@ -6,12 +6,12 @@ Base:
         VendorId: $.Id
         Manufacturer: $.Manufacturer
         Model: $.Model
-    RedFishV2: 
-        URL: https://{{ serverAddress }}/redfish/v2/Systems
-        VendorURI: $.Members[*].*
-        VendorId: $.Id
-        Manufacturer: $.Manufacturer
-        Model: $.Model
+    # RedFishV2: 
+    #     URL: https://{{ serverAddress }}/redfish/v2/Systems
+    #     VendorURI: $.Members[*].*
+    #     VendorId: $.Id
+    #     Manufacturer: $.Manufacturer
+    #     Model: $.Model
     # version2: https://{{ serverAddress }}/redfish/v2/Systems
 Model:
     HPE:

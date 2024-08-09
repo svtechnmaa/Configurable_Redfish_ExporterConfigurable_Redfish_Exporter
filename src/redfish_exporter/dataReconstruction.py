@@ -255,7 +255,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
                             stateTemp = result[0]
                             result[0] = dict()
                             result[0].update({'State':stateTemp,'Health':'Unknown'})
-                        elif isinstance(result[0],None):
+                        elif result[0] is None:
                             result[0] = dict()
                             result[0].update({'State': 'Unknown','Health':'Unknown'})
                         else:
