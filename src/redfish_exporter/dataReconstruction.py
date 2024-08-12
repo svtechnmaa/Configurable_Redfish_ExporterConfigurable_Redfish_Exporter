@@ -108,6 +108,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
             with requests.Session() as session:
                 session.auth = (username, password)
                 session.verify = False
+                session.timeout=20
                 for i in chainURIs:
                     chainURL = 'https://%s%s' % (serverAddress,i)
                     # currentDataRaw = requests.get(chainURL, verify=False, auth=(username, password)).json()
@@ -142,7 +143,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                 #     session.auth = (username, password)
                 #     session.verify = False
                 with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
-                    tempRawAll = {executor.submit(requests.get,'https://%s%s' % (serverAddress,memberURI),verify=False, auth=(username, password)): 'https://%s%s' % (serverAddress,memberURI) for memberURI in memberURIs}
+                    tempRawAll = {executor.submit(requests.get,'https://%s%s' % (serverAddress,memberURI),verify=False, auth=(username, password), timeout=20): 'https://%s%s' % (serverAddress,memberURI) for memberURI in memberURIs}
 
                 for tempMember in concurrent.futures.as_completed(tempRawAll):
                     memberURL = tempRawAll[tempMember]
@@ -189,6 +190,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     session = requests.Session()
     session.auth = (username, password)
     session.verify = False
+    session.timeout = 20
 
     for linkList in baseURL['Base']:
         logging.debug(baseURL['Base'][linkList])
