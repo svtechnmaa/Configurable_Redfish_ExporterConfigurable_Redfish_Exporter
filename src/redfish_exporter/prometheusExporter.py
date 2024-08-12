@@ -7,8 +7,8 @@ from jinja2 import Template
 from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn,TCPServer
-from dataReconstruction import dataReconstruction
-# from redfish_exporter.dataReconstruction import dataReconstruction
+# from dataReconstruction import dataReconstruction
+from redfish_exporter.dataReconstruction import dataReconstruction
 from prometheus_client import generate_latest, Summary, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR, Gauge, CollectorRegistry
 from urllib.parse import parse_qs
 from urllib.parse import urlparse

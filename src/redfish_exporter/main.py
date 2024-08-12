@@ -3,8 +3,8 @@ Entrypoint for the application
 """
 
 import argparse
-from prometheusExporter import prometheusExporter
-# from redfish_exporter.prometheusExporter import prometheusExporter
+# from prometheusExporter import prometheusExporter
+from redfish_exporter.prometheusExporter import prometheusExporter
 
 def main():
     parser = argparse.ArgumentParser(description='Physical Server state Exporter for Prometheus')
