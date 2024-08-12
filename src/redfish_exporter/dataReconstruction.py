@@ -3,7 +3,7 @@ import json
 from jsonpath_ng.ext import parse 
 from os import path
 from jinja2 import Template
-from yaml.loader import SafeLoader
+# from yaml.loader import SafeLoader
 import requests
 import urllib3
 import logging
@@ -39,6 +39,52 @@ def jsonpathCollector(content,expression,output='value'):
         else:
             return result
 
+def mappingDataElements(schemaCurrent,elementKey,elements,abspath,dataRaw,newDict):
+    # logging.debug("Current Schema: %s" % schemaCurrent)
+    logging.debug("Current Key: %s" % elementKey)
+    if elementKey == 'Id':
+        return
+    if not isinstance(schemaCurrent[elementKey],dict):
+        newJSONPath = re.sub(elements[-1], schemaCurrent[elementKey], abspath)
+        logging.debug("newJSONPath: %s" % newJSONPath)
+        result = jsonpathCollector(dataRaw,newJSONPath)
+        logging.debug("Result: %s" % result)
+        if result is not False:
+            if elementKey == 'Status':
+                if isinstance(result[0],dict):
+                    if 'State' not in result[0]:
+                        result[0].update({'State':'Unknown'})
+                    if 'Health' not in result[0]:
+                        result[0].update({'Health':'Unknown'})
+                elif isinstance(result[0],str):
+                    stateTemp = result[0]
+                    result[0] = dict()
+                    result[0].update({'State': stateTemp,'Health':'Unknown'})
+                elif result[0] is None:
+                    result[0] = dict()
+                    result[0].update({'State': 'Unknown','Health':'Unknown'})
+                else:
+                    logging.error("It's a bug for Status define: %s" % result[0])
+            newDict.update({elementKey: result[0]})
+            return newDict
+        else:
+            if elementKey == 'Status':
+                newDict.update({'Status': {'State': 'Unknown','Health':'Unknown'}})
+            else:
+                newDict.update({elementKey:'Unknown'})
+            return newDict
+
+def fixListConverter(data):
+    if isinstance(data, dict):
+        if all(isinstance(member, int) for member in data.keys()):
+            return [fixListConverter(value) for member, value in sorted(data.items())]
+        else:
+            return {member: fixListConverter(value) for member, value in data.items()}
+    elif isinstance(data, list):
+        return [fixListConverter(i) for i in data]
+    else:
+        return data
+
 def dataRawCollector(serverAddress,username,password,schema,url=None):
     logging.debug("Reading Schema: %s" % schema)
     if '$url' in schema:
@@ -50,17 +96,22 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
         logging.debug("use url from input: %s" % url)
 
     parentDataRaw = requests.get(url, verify=False, auth=(username, password)).json()
+    # parentDataRaw = session.get(url).json()
     logging.debug("Parent Data Raw: %s" % parentDataRaw)
 
     if '$chain' in schema:
         if '$jsonpath' in schema['$chain']:
             chainURIs = jsonpathCollector(parentDataRaw,schema['$chain']['$jsonpath'])
-            if chainURIs == False:
+            if not chainURIs:
                 logging.error("May be $jsonpath for $chain level was wrong")
                 return
-            for i in chainURIs:
-                chainURL = 'https://%s%s' % (serverAddress,i)
-                currentDataRaw = requests.get(chainURL, verify=False, auth=(username, password)).json()
+            with requests.Session() as session:
+                session.auth = (username, password)
+                session.verify = False
+                for i in chainURIs:
+                    chainURL = 'https://%s%s' % (serverAddress,i)
+                    # currentDataRaw = requests.get(chainURL, verify=False, auth=(username, password)).json()
+                    currentDataRaw = session.get(chainURL).json()
         else:
             logging.error("If you define $chain, you need define $jsonpath in $chain level")
             return
@@ -74,7 +125,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
             memberURIs = jsonpathCollector(currentDataRaw,currentSchema['$jsonpath'])
             logging.debug("memberURIs: %s" % memberURIs)
 
-            if memberURIs == False:
+            if not memberURIs:
                 logging.error("May be $jsonpath was wrong")
                 return
             else:
@@ -86,9 +137,35 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                     else:
                         logging.info("Find %s" % i)
                         childName.append(i)
-                for i in memberURIs:
-                    memberURL = 'https://%s%s' % (serverAddress,i)
-                    tempRaw = requests.get(memberURL, verify=False, auth=(username, password)).json()
+                
+                # with requests.Session() as session:
+                #     session.auth = (username, password)
+                #     session.verify = False
+                with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+                    tempRawAll = {executor.submit(requests.get,'https://%s%s' % (serverAddress,memberURI),verify=False, auth=(username, password)): 'https://%s%s' % (serverAddress,memberURI) for memberURI in memberURIs}
+
+                for tempMember in concurrent.futures.as_completed(tempRawAll):
+                    memberURL = tempRawAll[tempMember]
+                    logging.info("memberURL %s" % memberURL)
+                    tempRaw = tempMember.result().json()
+
+                # memberURLs = dict()
+                # with requests.Session() as session:
+                #     session.auth = (username, password)
+                #     session.verify = False
+                #     session.timeout = (10,20)
+                #     for i in memberURIs:
+                #         memberURL = 'https://%s%s' % (serverAddress,i)
+                #         logging.info("memberURL %s" % memberURL)
+                #         tempRaw = session.get(memberURL).json()
+                #         memberURLs[memberURL] = tempRaw
+                
+                # for memberURL in memberURLs:
+                #     tempRaw = memberURLs[memberURL]
+    
+                    # memberURL = 'https://%s%s' % (serverAddress,memberURI)
+                    # tempRaw = requests.get(memberURL, verify=False, auth=(username, password)).json()
+
                     for child in childName:
                         if isinstance(currentSchema[child],dict):
                             tempRaw[child] = dataRawCollector(serverAddress,username,password,currentSchema[child],url=memberURL)
@@ -96,36 +173,30 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                         else:
                             logging.error("Child is not correct")
                     memberDataRaw.append(tempRaw)
-                return memberDataRaw
+            return memberDataRaw
         else:
             logging.error("If you define $members, you need define $jsonpath in $members level")
             return
     return parentDataRaw
-
-def fixListConverter(data):
-    if isinstance(data, dict):
-        if all(isinstance(member, int) for member in data.keys()):
-            return [fixListConverter(value) for member, value in sorted(data.items())]
-        else:
-            return {member: fixListConverter(value) for member, value in data.items()}
-    elif isinstance(data, list):
-        return [fixListConverter(i) for i in data]
-    else:
-        return data
 
 def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
     logging.basicConfig(format=logFormat, level=logLevel.upper())
     base = templateDir + "schemas/baseInfo.yml"
     baseURL=readYAMLTemplate(base, {'serverAddress': serverAddress})
-    vendorURI= None
+    # vendorURI= None
+
+    session = requests.Session()
+    session.auth = (username, password)
+    session.verify = False
 
     for linkList in baseURL['Base']:
         logging.debug(baseURL['Base'][linkList])
         baseSystemURL=baseURL['Base'][linkList]['URL']
         logging.debug(baseSystemURL)
         try:
-            getVendor = requests.get(baseSystemURL, verify=False, auth=(username, password))
+            # getVendor = requests.get(baseSystemURL, verify=False, auth=(username, password))
+            getVendor = session.get(baseSystemURL)
             if getVendor.status_code == 401:
                 logging.warning("Status code %s returned, check your username/password is correct or has correct privileges to execute via Redfish API with URL %s" % (getVendor.status_code, baseSystemURL))
             if getVendor.status_code != 200:
@@ -134,7 +205,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
             logging.debug("getVendor: %s" % (getVendor.json()))
             tempValue = jsonpathCollector(getVendor.json(),str(baseURL['Base'][linkList]['VendorURI']))
             tempValue = tempValue[0]
-            if tempValue != False:
+            if tempValue:
                 vendorKey = tempValue
                 logging.info("vendorKey: %s" % (vendorKey))
                 correctLink = linkList
@@ -146,7 +217,9 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
 
     informationURL = 'https://%s%s' % (serverAddress,vendorKey)
     logging.debug("Base URL: %s" % (informationURL))
-    getInformation = requests.get(informationURL, verify=False, auth=(username, password))
+    # getInformation = requests.get(informationURL, verify=False, auth=(username, password))
+    getInformation = session.get(informationURL)
+    session.close()
     logging.debug("Information Raw Data: %s" % (getInformation.json()))
     commonDict = dict()
     for commonInfo in baseURL['Base'][correctLink]:
@@ -209,18 +282,18 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         dataRaw[componentName] = dataRawCollector(serverAddress,username,password,metadata[componentName])
     # return dataRaw,dataNewSchema
     logging.debug("dataRaw: %s" % dataRaw)
-    newDataRaw = dict()
+    IdPoints = dict()
     idList = jsonpathCollector(dataNewSchema,str("$..Id"),output='fullpath&value')
     # logging.info("Id: %s" % idList)
     for key in idList:
         result = jsonpathCollector(dataRaw,idList[key],output='fullpath&value')
         # logging.info("Id from data raw %s: %s" % (key,result))
-        newDataRaw.update(result)
-    # logging.info("Result: %s" % newDataRaw)
+        IdPoints.update(result)
+    logging.debug("Id Points: %s" % IdPoints)
     
     dataTemplate = dict()
 
-    for abspath in newDataRaw:
+    for abspath in IdPoints:
         current = dataTemplate
         elements = re.split(r'\.|\[|\]', abspath)
         elements = [int(k) if k.isdigit() else k for k in elements if k != '']
@@ -231,38 +304,55 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
             current = current.setdefault(element, dict())
             if not isinstance(element,int):
                 schemaCurrent = schemaCurrent[element]
-        # logging.info(newDataRaw[abspath])
+        # logging.info(IdPoints[abspath])
         newDict = dict()
-        newDict['Id'] = newDataRaw[abspath]
-        for i in schemaCurrent:
-            logging.debug("Current Schema: %s" % schemaCurrent)
-            logging.debug("Data -2: %s" % i)
-            if i == 'Id':
-                continue
-            if not isinstance(schemaCurrent[i],dict):
-                newJSONPath = re.sub(elements[-1], schemaCurrent[i], abspath)
-                logging.debug("newJSONPath: %s" % newJSONPath)
-                result = jsonpathCollector(dataRaw,newJSONPath)
-                logging.debug("Result: %s" % result)
-                if result is not False:
-                    if i == 'Status':
-                        if isinstance(result[0],dict):
-                            if 'State' not in result[0]:
-                                result[0].update({'State':'Unknown'})
-                            if 'Health' not in result[0]:
-                                result[0].update({'Health':'Unknown'})
-                        elif isinstance(result[0],str):
-                            stateTemp = result[0]
-                            result[0] = dict()
-                            result[0].update({'State':stateTemp,'Health':'Unknown'})
-                        elif result[0] is None:
-                            result[0] = dict()
-                            result[0].update({'State': 'Unknown','Health':'Unknown'})
-                        else:
-                            logging.error("It's a bug for Status define: %s" % result[0])
-                    newDict.update({i:result[0]})
-                else:
-                    newDict.update({i:'Unknown'})
+        newDict['Id'] = IdPoints[abspath]
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            for elementKey in schemaCurrent:
+                executor.submit(mappingDataElements,schemaCurrent,elementKey,elements,abspath,dataRaw,newDict)
+        # for elementKey in schemaCurrent:
+        #     mappingDataElements(schemaCurrent,elementKey,elements,abspath,dataRaw,newDict)
+
+        # with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
+        #     # mappingDataElements(schemaCurrent,elements,abspath,dataRaw,newDict)
+        #     [executor.submit(mappingDataElements,schemaCurrent,elementKey,elements,abspath,dataRaw,newDict) for elementKey in schemaCurrent]
+
+        # for tempMember in concurrent.futures.as_completed(tempRawAll):
+        #     memberURL = tempRawAll[tempMember]
+        #     logging.info("memberURL %s" % memberURL)
+        #     tempRaw = tempMember.result().json()
+
+
+        # for elementKey in schemaCurrent:
+        #     # logging.debug("Current Schema: %s" % schemaCurrent)
+        #     logging.debug("Current Key: %s" % elementKey)
+        #     if elementKey == 'Id':
+        #         continue
+        #     if not isinstance(schemaCurrent[elementKey],dict):
+        #         newJSONPath = re.sub(elements[-1], schemaCurrent[elementKey], abspath)
+        #         logging.debug("newJSONPath: %s" % newJSONPath)
+        #         result = jsonpathCollector(dataRaw,newJSONPath)
+        #         logging.debug("Result: %s" % result)
+        #         if result is not False:
+        #             if elementKey == 'Status':
+        #                 if isinstance(result[0],dict):
+        #                     if 'State' not in result[0]:
+        #                         result[0].update({'State':'Unknown'})
+        #                     if 'Health' not in result[0]:
+        #                         result[0].update({'Health':'Unknown'})
+        #                 elif isinstance(result[0],str):
+        #                     stateTemp = result[0]
+        #                     result[0] = dict()
+        #                     result[0].update({'State': stateTemp,'Health':'Unknown'})
+        #                 elif result[0] is None:
+        #                     result[0] = dict()
+        #                     result[0].update({'State': 'Unknown','Health':'Unknown'})
+        #                 else:
+        #                     logging.error("It's a bug for Status define: %s" % result[0])
+        #             newDict.update({elementKey: result[0]})
+        #         else:
+        #             newDict.update({elementKey:'Unknown'})
         current = current.update(newDict)
     newData = fixListConverter(dataTemplate)
     with open('/tmp/%s_rawdata.txt' % serverAddress, 'w') as file:

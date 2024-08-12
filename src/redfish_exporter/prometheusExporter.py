@@ -1,15 +1,14 @@
 import time
 import logging
 import yaml
-import json
 from os import path
 from jsonpath_ng.ext import parse 
 from jinja2 import Template
-from yaml.loader import SafeLoader
 from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn,TCPServer
-from redfish_exporter.dataReconstruction import dataReconstruction
+from dataReconstruction import dataReconstruction
+# from redfish_exporter.dataReconstruction import dataReconstruction
 from prometheus_client import generate_latest, Summary, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR, Gauge, CollectorRegistry
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
@@ -167,13 +166,13 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                                     logging.debug("[%s] newJSONPath: %s" % (serverAddress,newJSONPath))
                                     value = jsonpathCollector(firstPointData,str(newJSONPath))
                                     if value is False:
-                                        logging.error("[%s] Value isn't existed: %s" % (serverAddress,value))
+                                        logging.error("[%s] Value for %s isn't existed: %s" % (serverAddress,str(newJSONPath),value))
                                         codeNumber = 999
                                     elif value is None:
-                                        logging.warning("[%s] Value is None: %s" % (serverAddress,value))
+                                        logging.warning("[%s] Value for %s is None: %s" % (serverAddress,str(newJSONPath),value))
                                         codeNumber = 99
                                     elif value[0] is None:
-                                        logging.warning("[%s] Value[0] is None: %s" % (serverAddress,value[0]))
+                                        logging.warning("[%s] Value[0] for %s is None: %s" % (serverAddress,str(newJSONPath),value[0]))
                                         codeNumber = 99
                                     else:
                                         if value[0].upper() in metric['StatusCode']:
@@ -200,7 +199,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                             # else: 
                             #     logging.error("[%s] elements[-1] %s and elements[0] %s and memberID %s " % (serverAddress,elements[-1],elements[0],memberID))
                     else:
-                        logging.error("[%s] Not found Type %s, please call Admin" % (serverAddress, i['Type']))
+                        logging.error("[%s] Not found Type %s, please call Admin" % (serverAddress, metric['Type']))
 
             metrics = generate_latest(registry)
             REQUEST_TIME.observe(time.time() - start_time)
