@@ -5,12 +5,14 @@ from os import path
 from jinja2 import Template
 # from yaml.loader import SafeLoader
 import requests
-import urllib3
+# import urllib3
 import logging
 import re
 # from line_profiler import profile
 
-urllib3.disable_warnings()
+# urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings()
+requests.adapters.DEFAULT_RETRIES = 3
 
 def readYAMLTemplate(templateFile, dynamicInput):
     config_file_path = path.join(path.dirname(__file__), templateFile)
@@ -25,7 +27,7 @@ def readYAMLTemplate(templateFile, dynamicInput):
         logging.error("Can not find: %s" % (templateFile))
         return
 
-# @profile
+#@profile
 def jsonpathCollector(content,expression,output='value'):
     jsonpath_expr = parse(str(expression))
     if output == 'fullpath&value':
@@ -47,7 +49,7 @@ def fixListConverter(data):
     else:
         return data
 
-# @profile
+#@profile
 def dataRawCollector(serverAddress,username,password,schema,url=None):
     logging.debug("Reading Schema: %s" % schema)
     if '$url' in schema:
@@ -127,7 +129,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
             return
     return parentDataRaw
 
-# @profile
+#@profile
 def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
     logging.basicConfig(format=logFormat, level=logLevel.upper())
