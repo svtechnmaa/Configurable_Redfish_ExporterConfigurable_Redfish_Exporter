@@ -1,14 +1,14 @@
 import time
 import logging
-import yaml
-from os import path
+# import yaml
+# from os import path
 from jsonpath_ng.ext import parse 
-from jinja2 import Template
+# from jinja2 import Template
 from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn,TCPServer
-# from dataReconstruction import dataReconstruction
-from redfish_exporter.dataReconstruction import dataReconstruction
+# from dataReconstruction import dataReconstruction, jsonpathCollector, readYAMLTemplate
+from redfish_exporter.dataReconstruction import dataReconstruction, jsonpathCollector, readYAMLTemplate
 from prometheus_client import generate_latest, Summary, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR, Gauge, CollectorRegistry
 from urllib.parse import parse_qs
 from urllib.parse import urlparse
@@ -23,32 +23,28 @@ REQUEST_TIME = Summary(
     'request_processing_seconds', 'Time spent processing request')
 CACHE={}
 
-def readYAMLTemplate(templateFile, dynamicInput):
-    config_file_path = path.join(path.dirname(__file__), templateFile)
-    if path.isfile(config_file_path):
-        with open(templateFile, 'r') as f:
-            yamlContent = f.read()
-            renderedContent = Template(yamlContent).render(dynamicInput)
-            configData = yaml.safe_load(renderedContent)
-            logging.debug("Component Schema Data: %s" % (configData))
-            return configData
-    else:
-        logging.error("Can not find: %s" % (templateFile))
-        return
+# def readYAMLTemplate(templateFile, dynamicInput):
+#     config_file_path = path.join(path.dirname(__file__), templateFile)
+#     if path.isfile(config_file_path):
+#         with open(templateFile, 'r') as f:
+#             yamlContent = f.read()
+#             renderedContent = Template(yamlContent).render(dynamicInput)
+#             configData = yaml.safe_load(renderedContent)
+#             logging.debug("Component Schema Data: %s" % (configData))
+#             return configData
+#     else:
+#         logging.error("Can not find: %s" % (templateFile))
+#         return
 
-def jsonpathCollector(content,expression,output='value'):
-    jsonpath_expr = parse(str(expression))
-    if output == 'fullpath&value':
-        result = dict()
-        for match in jsonpath_expr.find(content):
-            result[str(match.full_path)] = match.value
-        return result
-    else:
-        result = [match.value for match in jsonpath_expr.find(content)]
-        if result == []:
-            return False
-        else:
-            return result
+# def jsonpathCollector(content,expression,output='value'):
+#     jsonpath_expr = parse(str(expression))
+#     if output == 'fullpath&value':
+#         result = {str(match.full_path): match.value for match in jsonpath_expr.find(content)}
+#     else:
+#         result = [match.value for match in jsonpath_expr.find(content)]
+#         if result == []:
+#             return False
+#     return result
 
 class ThreadedTCPServer(ThreadingMixIn,TCPServer):
     pass

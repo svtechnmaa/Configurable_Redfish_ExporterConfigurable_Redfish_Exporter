@@ -7,8 +7,8 @@ from jinja2 import Template
 import requests
 import urllib3
 import logging
-import concurrent.futures
 import re
+# from line_profiler import profile
 
 urllib3.disable_warnings()
 
@@ -25,54 +25,16 @@ def readYAMLTemplate(templateFile, dynamicInput):
         logging.error("Can not find: %s" % (templateFile))
         return
 
+# @profile
 def jsonpathCollector(content,expression,output='value'):
     jsonpath_expr = parse(str(expression))
     if output == 'fullpath&value':
-        result = dict()
-        for match in jsonpath_expr.find(content):
-            result[str(match.full_path)] = match.value
-        return result
+        result = {str(match.full_path): match.value for match in jsonpath_expr.find(content)}
     else:
         result = [match.value for match in jsonpath_expr.find(content)]
         if result == []:
             return False
-        else:
-            return result
-
-def mappingDataElements(schemaCurrent,elementKey,elements,abspath,dataRaw,newDict):
-    # logging.debug("Current Schema: %s" % schemaCurrent)
-    logging.debug("Current Key: %s" % elementKey)
-    if elementKey == 'Id':
-        return
-    if not isinstance(schemaCurrent[elementKey],dict):
-        newJSONPath = re.sub(elements[-1], schemaCurrent[elementKey], abspath)
-        logging.debug("newJSONPath: %s" % newJSONPath)
-        result = jsonpathCollector(dataRaw,newJSONPath)
-        logging.debug("Result: %s" % result)
-        if result is not False:
-            if elementKey == 'Status':
-                if isinstance(result[0],dict):
-                    if 'State' not in result[0]:
-                        result[0].update({'State':'Unknown'})
-                    if 'Health' not in result[0]:
-                        result[0].update({'Health':'Unknown'})
-                elif isinstance(result[0],str):
-                    stateTemp = result[0]
-                    result[0] = dict()
-                    result[0].update({'State': stateTemp,'Health':'Unknown'})
-                elif result[0] is None:
-                    result[0] = dict()
-                    result[0].update({'State': 'Unknown','Health':'Unknown'})
-                else:
-                    logging.error("It's a bug for Status define: %s" % result[0])
-            newDict.update({elementKey: result[0]})
-            return newDict
-        else:
-            if elementKey == 'Status':
-                newDict.update({'Status': {'State': 'Unknown','Health':'Unknown'}})
-            else:
-                newDict.update({elementKey:'Unknown'})
-            return newDict
+    return result
 
 def fixListConverter(data):
     if isinstance(data, dict):
@@ -85,6 +47,7 @@ def fixListConverter(data):
     else:
         return data
 
+# @profile
 def dataRawCollector(serverAddress,username,password,schema,url=None):
     logging.debug("Reading Schema: %s" % schema)
     if '$url' in schema:
@@ -108,7 +71,8 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
             with requests.Session() as session:
                 session.auth = (username, password)
                 session.verify = False
-                session.timeout=20
+                session.keep_alive = False
+                # session.timeout=60
                 for i in chainURIs:
                     chainURL = 'https://%s%s' % (serverAddress,i)
                     # currentDataRaw = requests.get(chainURL, verify=False, auth=(username, password)).json()
@@ -138,34 +102,17 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
                     else:
                         logging.info("Find %s" % i)
                         childName.append(i)
-                
-                # with requests.Session() as session:
-                #     session.auth = (username, password)
-                #     session.verify = False
-                with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
-                    tempRawAll = {executor.submit(requests.get,'https://%s%s' % (serverAddress,memberURI),verify=False, auth=(username, password), timeout=20): 'https://%s%s' % (serverAddress,memberURI) for memberURI in memberURIs}
-
-                for tempMember in concurrent.futures.as_completed(tempRawAll):
-                    memberURL = tempRawAll[tempMember]
-                    logging.info("memberURL %s" % memberURL)
-                    tempRaw = tempMember.result().json()
-
-                # memberURLs = dict()
-                # with requests.Session() as session:
-                #     session.auth = (username, password)
-                #     session.verify = False
-                #     session.timeout = (10,20)
-                #     for i in memberURIs:
-                #         memberURL = 'https://%s%s' % (serverAddress,i)
-                #         logging.info("memberURL %s" % memberURL)
-                #         tempRaw = session.get(memberURL).json()
-                #         memberURLs[memberURL] = tempRaw
-                
-                # for memberURL in memberURLs:
-                #     tempRaw = memberURLs[memberURL]
     
-                    # memberURL = 'https://%s%s' % (serverAddress,memberURI)
-                    # tempRaw = requests.get(memberURL, verify=False, auth=(username, password)).json()
+                for memberURI in memberURIs:
+                    memberURL = 'https://%s%s' % (serverAddress,memberURI)
+                    logging.info("memberURL %s" % memberURL)
+                    
+                    with requests.Session() as session:
+                        session.auth = (username, password)
+                        session.verify = False
+                        session.keep_alive =False
+                        tempRaw = session.get(memberURL).json()
+                        # tempRaw = requests.get(memberURL, verify=False, auth=(username, password)).json()
 
                     for child in childName:
                         if isinstance(currentSchema[child],dict):
@@ -180,6 +127,7 @@ def dataRawCollector(serverAddress,username,password,schema,url=None):
             return
     return parentDataRaw
 
+# @profile
 def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     logFormat = '%(asctime)s [%(levelname)s] [' + serverAddress + '] %(message)s'  
     logging.basicConfig(format=logFormat, level=logLevel.upper())
@@ -190,7 +138,8 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     session = requests.Session()
     session.auth = (username, password)
     session.verify = False
-    session.timeout = 20
+    session.keep_alive = False
+    # session.timeout = 60
 
     for linkList in baseURL['Base']:
         logging.debug(baseURL['Base'][linkList])
@@ -295,6 +244,7 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     
     dataTemplate = dict()
 
+    elementFlag = None
     for abspath in IdPoints:
         current = dataTemplate
         elements = re.split(r'\.|\[|\]', abspath)
@@ -309,58 +259,50 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         # logging.info(IdPoints[abspath])
         newDict = dict()
         newDict['Id'] = IdPoints[abspath]
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            for elementKey in schemaCurrent:
-                executor.submit(mappingDataElements,schemaCurrent,elementKey,elements,abspath,dataRaw,newDict)
-        # for elementKey in schemaCurrent:
-        #     mappingDataElements(schemaCurrent,elementKey,elements,abspath,dataRaw,newDict)
-
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
-        #     # mappingDataElements(schemaCurrent,elements,abspath,dataRaw,newDict)
-        #     [executor.submit(mappingDataElements,schemaCurrent,elementKey,elements,abspath,dataRaw,newDict) for elementKey in schemaCurrent]
-
-        # for tempMember in concurrent.futures.as_completed(tempRawAll):
-        #     memberURL = tempRawAll[tempMember]
-        #     logging.info("memberURL %s" % memberURL)
-        #     tempRaw = tempMember.result().json()
-
-
-        # for elementKey in schemaCurrent:
-        #     # logging.debug("Current Schema: %s" % schemaCurrent)
-        #     logging.debug("Current Key: %s" % elementKey)
-        #     if elementKey == 'Id':
-        #         continue
-        #     if not isinstance(schemaCurrent[elementKey],dict):
-        #         newJSONPath = re.sub(elements[-1], schemaCurrent[elementKey], abspath)
-        #         logging.debug("newJSONPath: %s" % newJSONPath)
-        #         result = jsonpathCollector(dataRaw,newJSONPath)
-        #         logging.debug("Result: %s" % result)
-        #         if result is not False:
-        #             if elementKey == 'Status':
-        #                 if isinstance(result[0],dict):
-        #                     if 'State' not in result[0]:
-        #                         result[0].update({'State':'Unknown'})
-        #                     if 'Health' not in result[0]:
-        #                         result[0].update({'Health':'Unknown'})
-        #                 elif isinstance(result[0],str):
-        #                     stateTemp = result[0]
-        #                     result[0] = dict()
-        #                     result[0].update({'State': stateTemp,'Health':'Unknown'})
-        #                 elif result[0] is None:
-        #                     result[0] = dict()
-        #                     result[0].update({'State': 'Unknown','Health':'Unknown'})
-        #                 else:
-        #                     logging.error("It's a bug for Status define: %s" % result[0])
-        #             newDict.update({elementKey: result[0]})
-        #         else:
-        #             newDict.update({elementKey:'Unknown'})
+        
+        if elementFlag != elements[0]:
+            rootElementDataRaw = {elements[0]: dataRaw[elements[0]]}
+            elementFlag = elements[0]
+        # logging.info("Data raw via element:\n%s" % rootElementDataRaw)
+        for elementKey in schemaCurrent:
+            logging.debug("Current Key: %s" % elementKey)
+            if elementKey == 'Id':
+                continue
+            if not isinstance(schemaCurrent[elementKey],dict):
+                newJSONPath = re.sub(elements[-1], schemaCurrent[elementKey], abspath)
+                logging.debug("newJSONPath: %s" % newJSONPath)
+                result = jsonpathCollector(rootElementDataRaw,newJSONPath)
+                logging.debug("Result: %s" % result)
+                if result is not False:
+                    if elementKey == 'Status':
+                        if isinstance(result[0],dict):
+                            if 'State' not in result[0]:
+                                result[0].update({'State':'Unknown'})
+                            if 'Health' not in result[0]:
+                                result[0].update({'Health':'Unknown'})
+                        elif isinstance(result[0],str):
+                            stateTemp = result[0]
+                            result[0] = dict()
+                            result[0].update({'State': stateTemp,'Health':'Unknown'})
+                        elif result[0] is None:
+                            result[0] = dict()
+                            result[0].update({'State': 'Unknown','Health':'Unknown'})
+                        else:
+                            logging.error("It's a bug for Status define: %s" % result[0])
+                    newDict.update({elementKey: result[0]})
+                    # return newDict
+                else:
+                    if elementKey == 'Status':
+                        newDict.update({'Status': {'State': 'Unknown','Health':'Unknown'}})
+                    else:
+                        newDict.update({elementKey:'Unknown'})
         current = current.update(newDict)
     newData = fixListConverter(dataTemplate)
     with open('/tmp/%s_rawdata.txt' % serverAddress, 'w') as file:
         json.dump(dataRaw, file)
     with open('/tmp/%s_newdata.txt' % serverAddress, 'w') as file:
         json.dump(newData, file)
+    logging.info("Generate data Raw successfully")
     return dataRaw, newData
 
 if __name__ == '__main__':
