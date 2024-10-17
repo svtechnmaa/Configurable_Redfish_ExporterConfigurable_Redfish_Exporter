@@ -137,10 +137,10 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
     baseURL=readYAMLTemplate(base, {'serverAddress': serverAddress})
     # vendorURI= None
 
-    session = requests.Session()
-    session.auth = (username, password)
-    session.verify = False
-    session.keep_alive = False
+    # session = requests.Session()
+    # session.auth = (username, password)
+    # session.verify = False
+    # session.keep_alive = False
     # session.timeout = 60
 
     for linkList in baseURL['Base']:
@@ -148,8 +148,8 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
         baseSystemURL=baseURL['Base'][linkList]['URL']
         logging.debug(baseSystemURL)
         try:
-            # getVendor = requests.get(baseSystemURL, verify=False, auth=(username, password))
-            getVendor = session.get(baseSystemURL)
+            getVendor = requests.get(baseSystemURL, verify=False, auth=(username, password))
+            # getVendor = session.get(baseSystemURL)
             if getVendor.status_code == 401:
                 logging.warning("Status code %s returned, check your username/password is correct or has correct privileges to execute via Redfish API with URL %s" % (getVendor.status_code, baseSystemURL))
             if getVendor.status_code != 200:
@@ -170,9 +170,9 @@ def dataReconstruction(serverAddress,username,password,templateDir,logLevel):
 
     informationURL = 'https://%s%s' % (serverAddress,vendorKey)
     logging.debug("Base URL: %s" % (informationURL))
-    # getInformation = requests.get(informationURL, verify=False, auth=(username, password))
-    getInformation = session.get(informationURL)
-    session.close()
+    getInformation = requests.get(informationURL, verify=False, auth=(username, password))
+    # getInformation = session.get(informationURL)
+    # session.close()
     logging.debug("Information Raw Data: %s" % (getInformation.json()))
     commonDict = dict()
     for commonInfo in baseURL['Base'][correctLink]:

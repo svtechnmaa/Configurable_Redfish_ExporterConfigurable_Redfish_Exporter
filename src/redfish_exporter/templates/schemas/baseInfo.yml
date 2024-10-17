@@ -17,6 +17,7 @@ Model:
     HPE:
         Gen9: HPEProLiantGen9.yml
         Gen10: HPEProLiantGen10.yml
+        Gen11: HPEProLiantGen11.yml
     Dell:
         R750: DellPowerEdgeR750.yml
         R650: DellPowerEdgeR650.yml
