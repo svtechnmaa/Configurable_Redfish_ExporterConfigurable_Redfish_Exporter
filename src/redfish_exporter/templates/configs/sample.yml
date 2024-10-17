@@ -59,8 +59,8 @@ Metrics:
       GOODINUSE: 0
       UNKNOWN: 99
       ABSENT: 2
-  - Name: PhysicalServer_MemoryDIMMStatus
-    Description: 'physical server memory dimm status'
+  - Name: PhysicalServer_MemoryDIMMHealth
+    Description: 'physical server memory dimm health'
     Type: Gauge
     Label: ["ServerAddress","HostName", "DeviceLocator", "MemoryType", "SerialNumber","ErrorCorrection","Manufacturer","CapacityMiB"]
     Datapoint: MemoryDIMM
