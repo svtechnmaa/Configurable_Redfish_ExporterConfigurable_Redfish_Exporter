@@ -3,14 +3,10 @@ import json
 from jsonpath_ng.ext import parse 
 from os import path
 from jinja2 import Template
-# from yaml.loader import SafeLoader
 import requests
-# import urllib3
 import logging
 import re
-# from line_profiler import profile
 
-# urllib3.disable_warnings()
 requests.packages.urllib3.disable_warnings()
 requests.adapters.DEFAULT_RETRIES = 3
 

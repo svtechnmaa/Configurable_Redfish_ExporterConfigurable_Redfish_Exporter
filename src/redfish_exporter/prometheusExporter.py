@@ -1,13 +1,10 @@
 import time
 import logging
-# import yaml
-# from os import path
 from jsonpath_ng.ext import parse 
-# from jinja2 import Template
 from threading import Thread
 from http.server import SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn,TCPServer
-# from dataReconstruction import dataReconstruction, jsonpathCollector, readYAMLTemplate
+### from dataReconstruction import dataReconstruction, jsonpathCollector, readYAMLTemplate
 from redfish_exporter.dataReconstruction import dataReconstruction, jsonpathCollector, readYAMLTemplate
 from prometheus_client import generate_latest, Summary, REGISTRY, PROCESS_COLLECTOR, PLATFORM_COLLECTOR, Gauge, CollectorRegistry
 from urllib.parse import parse_qs
@@ -23,29 +20,6 @@ REQUEST_TIME = Summary(
     'request_processing_seconds', 'Time spent processing request')
 CACHE={}
 
-# def readYAMLTemplate(templateFile, dynamicInput):
-#     config_file_path = path.join(path.dirname(__file__), templateFile)
-#     if path.isfile(config_file_path):
-#         with open(templateFile, 'r') as f:
-#             yamlContent = f.read()
-#             renderedContent = Template(yamlContent).render(dynamicInput)
-#             configData = yaml.safe_load(renderedContent)
-#             logging.debug("Component Schema Data: %s" % (configData))
-#             return configData
-#     else:
-#         logging.error("Can not find: %s" % (templateFile))
-#         return
-
-# def jsonpathCollector(content,expression,output='value'):
-#     jsonpath_expr = parse(str(expression))
-#     if output == 'fullpath&value':
-#         result = {str(match.full_path): match.value for match in jsonpath_expr.find(content)}
-#     else:
-#         result = [match.value for match in jsonpath_expr.find(content)]
-#         if result == []:
-#             return False
-#     return result
-
 class ThreadedTCPServer(ThreadingMixIn,TCPServer):
     pass
 
@@ -57,14 +31,19 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
         pass
 
     def _sendContent(self, data, status=200, content_type="text/plain"):
-        if isinstance(data, str):
-            data = data.encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
-        self.wfile.flush()
+        try:
+            if isinstance(data, str):
+                data = data.encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+            self.wfile.flush()
+        except BrokenPipeError:
+            logging.error("Client disconnected before response completion")    
+        except socket.error as e:
+            logging.error("Socket error: {e}")    
 
     def do_GET(self):
         start_time = time.time()
@@ -100,7 +79,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
                 cachedResponse, timestamp = CACHE[cacheInfo]
                 if time.time() - timestamp < int(cacheTimeout):
                     logging.info("[%s] Complete gathering health-check information from cache", serverAddress)
-                    return self._sendContent(cachedResponse, content_type="application/json")
+                    return self._sendContent(cachedResponse)
 
             dataraw, collectedData=dataReconstruction(serverAddress,username,password,self.templatedir,self.loglevel)
             logging.info("[%s] Complete gathering health-check information", serverAddress)
@@ -200,7 +179,7 @@ class ManualRequestHandler(SimpleHTTPRequestHandler):
             metrics = generate_latest(registry)
             REQUEST_TIME.observe(time.time() - start_time)
             CACHE[cacheInfo] = (metrics, time.time())
-            return self._sendContent(metrics, content_type="application/json")
+            return self._sendContent(metrics)
         else:
             return self._sendContent(f"404: {url}", status=404)
 
