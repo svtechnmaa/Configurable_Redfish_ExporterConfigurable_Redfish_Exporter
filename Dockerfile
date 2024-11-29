@@ -1,5 +1,5 @@
 # Compile redfish_exporter
-FROM alpine:3.14 as build
+FROM python:3.12.7-alpine3.20 as build
 
 LABEL Name=builder
 LABEL appVersion=${appVersion}
@@ -10,12 +10,11 @@ ENV TZ=Asia/Ho_Chi_Minh
 COPY ./src /opt/Configurable_Redfish_Exporter/src
 COPY setup.py /opt/Configurable_Redfish_Exporter/setup.py
 
-RUN apk add py3-pip && \
-    pip3 install setuptools
+RUN pip3 install setuptools
 WORKDIR /opt/Configurable_Redfish_Exporter
 RUN python3 setup.py sdist --formats=gztar
 
-FROM alpine:3.14
+FROM python:3.12.7-alpine3.20
 
 LABEL Name=redfish_exporter
 LABEL appVersion=${appVersion}
@@ -23,11 +22,13 @@ LABEL maintainer=${maintainer}
 
 ENV TZ=Asia/Ho_Chi_Minh
 
-COPY --from=build /opt/Configurable_Redfish_Exporter/src/redfish_exporter/templates /opt/Configurable_Redfish_Exporter/templates
+# COPY --from=build /opt/Configurable_Redfish_Exporter/src/redfish_exporter/templates /opt/Configurable_Redfish_Exporter/templates
 COPY --from=build /opt/Configurable_Redfish_Exporter/dist/*.tar.gz /tmp/redfish_exporter/physical-exporter.tar.gz
-RUN apk add tzdata py3-pip && \
+RUN apk add tzdata && \
     echo $TZ > /etc/timezone && \
     pip install --no-cache-dir /tmp/redfish_exporter/physical-exporter.tar.gz && \
-    rm -rf /tmp/*
+    rm -rf /tmp/* && \
+    mkdir -p /opt/redfish_exporter && \
+    ln -s /usr/local/lib/python3.12/site-packages/app/core/templates /opt/redfish_exporter/templates
 ENTRYPOINT ["redfish-exporter"]
 EXPOSE 9814

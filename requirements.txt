@@ -1,5 +1,10 @@
 pyyaml
 jsonpath
+jsonpath-ng
 Jinja2
-prometheus-client
-
+prometheus_client
+pydantic
+uvicorn
+starlette
+fastapi
+aiohttp

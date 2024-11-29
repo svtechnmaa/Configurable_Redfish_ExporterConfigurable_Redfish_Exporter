@@ -1,2 +1,4 @@
-src/redfish_exporter/__pycache__/
-src/redfish_exporter/profile_output*
+src/app/__pycache__/
+src/app/profile_output*
+src/app/core/__pycache__/
+src/app/routers/__pycache__/

@@ -1,0 +1,3 @@
+include src/app/logging/*.yml
+include src/app/core/templates/configs/*.yml
+include src/app/core/templates/schemas/*.yml

@@ -1,0 +1,26 @@
+Metadata:
+  RedfishV1:
+    "$inituri": /redfish/v1/Systems
+    "$jsonpath": $.Members[*].*
+    # ">>driveid": -1
+    ">>serverid": -1 ### key that you can collect from URI
+#  RedfishV2:
+
+# Data:
+#   Base:
+#     VendorId: $.Id
+#     Manufacturer: $.Manufacturer
+#     Model: $.Model
+
+ModelSchema:
+  HPE:
+      Gen9: HPEProLiantGen9.yml
+      Gen10: HPEProLiantGen10.yml
+      Gen11: HPEProLiantGen11.yml
+      Default: HPEProLiantGen10.yml
+  Dell:
+      R750: DellPowerEdgeR750.yml
+      R650: DellPowerEdgeR650.yml
+      R630: DellPowerEdgeR630.yml
+      R6515: DellPowerEdgeR6515.yml
+      Default: DellPowerEdgeR630.yml
