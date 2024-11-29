@@ -8,6 +8,7 @@ LABEL maintainer=${maintainer}
 ENV TZ=Asia/Ho_Chi_Minh
 
 COPY ./src /opt/Configurable_Redfish_Exporter/src
+COPY MANIFEST.in /opt/Configurable_Redfish_Exporter/MANIFEST.in
 COPY setup.py /opt/Configurable_Redfish_Exporter/setup.py
 
 RUN pip3 install setuptools
