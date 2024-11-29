@@ -31,7 +31,7 @@ def main():
     if args.datadir:
         data_dir = args.datadir
 
-    uvicorn.run("app.main:app", host=host, port=port, log_config=config_path)
+    uvicorn.run("redfish_collector.main:app", host=host, port=port, log_config=config_path)
 
 
 if __name__ == "__main__":

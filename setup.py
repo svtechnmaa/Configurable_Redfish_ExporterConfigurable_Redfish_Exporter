@@ -38,7 +38,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'redfish-exporter = app.main:main',
+            'redfish-exporter = redfish_collector.main:main',
         ],
     }
 )
