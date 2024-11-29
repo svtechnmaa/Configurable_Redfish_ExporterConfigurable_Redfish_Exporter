@@ -34,7 +34,6 @@ async def read_all(serverAddress: IPvAnyAddress = Query(None), \
                     # username: str = Query(None), \
                     # password: str = Query(None), \
                     config: str = Query(None)):
-    templateDir = settings.template_dir
     if (serverAddress is None) or (config is None):
         raise HTTPException(status_code=401, detail = 'Collect metrics Failed, please add params')
     # if path.isfile(config_file_path):
