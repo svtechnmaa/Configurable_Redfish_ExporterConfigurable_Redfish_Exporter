@@ -29,6 +29,6 @@ RUN apk add tzdata && \
     pip install --no-cache-dir /tmp/redfish_exporter/physical-exporter.tar.gz && \
     rm -rf /tmp/* && \
     mkdir -p /opt/redfish_exporter && \
-    ln -s /usr/local/lib/python3.12/site-packages/app/core/templates /opt/redfish_exporter/templates
+    ln -s /usr/local/lib/python3.12/site-packages/redfish_collector/core/templates /opt/redfish_exporter/templates
 ENTRYPOINT ["redfish-exporter"]
 EXPOSE 9814
