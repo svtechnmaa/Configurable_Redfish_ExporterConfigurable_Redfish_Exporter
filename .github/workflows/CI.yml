@@ -30,9 +30,9 @@ jobs:
         context: .
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/redfish-exporter:2.0.x
-          ghcr.io/${{ github.repository_owner }}/redfish-exporter:2.0.2
+          ghcr.io/${{ github.repository_owner }}/redfish-exporter:2.x.x
+          ghcr.io/${{ github.repository_owner }}/redfish-exporter:2.0.3
           ghcr.io/${{ github.repository_owner }}/redfish-exporter:latest
         build-args: |
-          appVersion=2.0.2
+          appVersion=2.0.3
           maintainer=Freezing

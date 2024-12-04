@@ -17,10 +17,8 @@ ModelSchema:
       Gen9: HPEProLiantGen9.yml
       Gen10: HPEProLiantGen10.yml
       Gen11: HPEProLiantGen11.yml
-      Default: HPEProLiantGen10.yml
   Dell:
       R750: DellPowerEdgeR750.yml
       R650: DellPowerEdgeR650.yml
       R630: DellPowerEdgeR630.yml
       R6515: DellPowerEdgeR6515.yml
-      Default: DellPowerEdgeR630.yml
