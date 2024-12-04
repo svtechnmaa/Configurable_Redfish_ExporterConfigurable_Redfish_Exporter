@@ -1,40 +1,32 @@
 Metadata:
   Common:
-    "$url": https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}
-
+    "$inituri": /redfish/v1/Systems/{{ serverid }}
   ArrayController:
-    "$url": https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}/Storage
-    "$members":
+    "$inituri": /redfish/v1/Systems/{{ serverid }}/SmartStorage/ArrayControllers
+    # "$inituri": /redfish/v1/Systems/{{ serverid }}/SmartStorage/ArrayControllers/{{ arraycontrollerid }}/DiskDrives
+    "$jsonpath": $.Members[*].*
+    ">>arraycontrollerid": -1
+    PhysicalDrive:
+      "$inituri": /redfish/v1/Systems/{{ serverid }}/SmartStorage/ArrayControllers/{{ arraycontrollerid }}/DiskDrives
       "$jsonpath": $.Members[*].*
-      PhysicalDrive:
-        "$members":
-          "$jsonpath": $.Drives[*].*
-    
+      # ">>driveid": -2
   MemoryDIMM:
-    "$url": https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}/Memory
-    "$members":
-      "$jsonpath": $.Members[*].*
-
-  NetworkInterface:
-    "$url": https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}/EthernetInterfaces
-    "$members":
-      "$jsonpath": $.Members[*].*
-
-  Processor: 
-    "$url": https://{{ serverAddress }}/redfish/v1/Systems/{{ vendorURI }}/Processors
-    "$members":
-      "$jsonpath": $.Members[*].*
-
+    "$inituri": /redfish/v1/Systems/{{ serverid }}/Memory
+    "$jsonpath": $.Members[*].*
+  EthernetInterface:
+    "$inituri": /redfish/v1/Systems/{{ serverid }}/EthernetInterfaces
+    "$jsonpath": $.Members[*].*
+  Processor:
+    "$inituri": /redfish/v1/Systems/{{ serverid }}/Processors
+    "$jsonpath": $.Members[*].*
   Thermal:
-    "$url": https://{{ serverAddress }}/redfish/v1/Chassis/{{ vendorURI }}/Thermal
-
+    "$inituri": /redfish/v1/Chassis/{{ serverid }}/Thermal
   Power:
-    "$url": https://{{ serverAddress }}/redfish/v1/Chassis/{{ vendorURI }}/Power
-
+    "$inituri": /redfish/v1/Chassis/{{ serverid }}/Power
 
 Data:
   Common:
-    Id: $.Common.Id
+    Id: $.Common[*].Id
     AssetTag: AssetTag
     BiosVersion: BiosVersion
     HostName: HostName
@@ -42,7 +34,7 @@ Data:
     Manufacturer: Manufacturer
     MemoryHealthRollupStatus: MemorySummary.Status.HealthRollup
     TotalSystemMemoryGiB: MemorySummary.TotalSystemMemoryGiB
-    # TotalSystemPersistentMemoryGiB: MemorySummary.TotalSystemPersistentMemoryGiB
+    TotalSystemPersistentMemoryGiB: MemorySummary.TotalSystemPersistentMemoryGiB
     Model: Model
     Name: Name
     PowerState: PowerState
@@ -52,7 +44,6 @@ Data:
     SKU: SKU
     SerialNumber: SerialNumber
     Status: Status
-    # Health: Status.Health
     SystemType: SystemType
     UUID: UUID
   ArrayController:
@@ -66,8 +57,7 @@ Data:
     InternalPortCount: InternalPortCount
     Location: Location
     LocationFormat: LocationFormat
-    Model: StorageControllers.[0].Model
-    Manufacturer: StorageControllers.[0].Manufacturer
+    Model: Model
     Name: Name
     ReadCachePercent: ReadCachePercent
     SerialNumber: SerialNumber
@@ -77,9 +67,9 @@ Data:
       Id: $.ArrayController[*].PhysicalDrive[*].Id
       SerialNumber: SerialNumber
       BlockSizeBytes: BlockSizeBytes
-      CapacityBytes: CapacityBytes
+      CapacityGB: CapacityGB
       CapacityLogicalBlocks: CapacityLogicalBlocks
-      # CapacityMiB: CapacityMiB
+      CapacityMiB: CapacityMiB
       CarrierApplicationVersion: CarrierApplicationVersion
       InterfaceSpeedMbps: InterfaceSpeedMbps
       InterfaceType: InterfaceType
@@ -88,11 +78,9 @@ Data:
       LocationFormat: LocationFormat
       MediaType: MediaType
       Model: Model
-      Manufacturer: Manufacturer
-      Description: Description
       Name: Name
       PowerOnHours: PowerOnHours
-      SSDEnduranceUtilizationPercentage: PredictedMediaLifeLeftPercent
+      SSDEnduranceUtilizationPercentage: SSDEnduranceUtilizationPercentage
       SerialNumber: SerialNumber
       Status: Status
       UncorrectedReadErrors: UncorrectedReadErrors
@@ -113,11 +101,11 @@ Data:
     PersistentRegionSizeLimitMiB: PersistentRegionSizeLimitMiB
     RankCount: RankCount
     Status: Status
-    # VendorID: VendorID
+    VendorID: VendorID
     VolatileRegionSizeLimitMiB: VolatileRegionSizeLimitMiB
     VolatileSizeMiB: VolatileSizeMiB
-  NetworkInterface:
-    Id: NetworkInterface[*].Id
+  EthernetInterface:
+    Id: EthernetInterface[*].Id
     FullDuplex: FullDuplex
     InterfaceEnabled: InterfaceEnabled
     LinkStatus: LinkStatus
@@ -141,7 +129,7 @@ Data:
     Status: Status
   Power:
     PowerSupplies:
-      Id: $.Power.PowerSupplies[*].MemberId
+      Id: $.Power[*].Id
       Model: Model
       Name: Name
       PowerCapacityWatts: PowerCapacityWatts
@@ -154,21 +142,21 @@ Data:
       LineInputVoltageType: LineInputVoltageType
       Manufacturer: Manufacturer
     PowerControl:
-      MemberId: $.Power.PowerControl[*].MemberId
+      MemberId: $.Power[*].Id
       PowerCapacityWatts: PowerCapacityWatts
       PowerConsumedWatts: PowerConsumedWatts
       PowerMetrics: PowerMetrics
   Thermal:
-    Id: $.Thermal.Id
+    Id: $.Thermal[*].Id
     Name: Name
     Fans:
-      Id: $.Thermal.Fans[*].MemberId
+      Id: $.Thermal[*].Fans[*].MemberId
       Name: Name
       Reading: Reading
       ReadingUnits: ReadingUnits
       Status: Status
     Temperatures:
-      Id: $.Thermal.Temperatures[*].MemberId
+      Id: $.Thermal[*].Temperatures[*].MemberId
       Name: Name
       PhysicalContext: PhysicalContext
       ReadingCelsius: ReadingCelsius

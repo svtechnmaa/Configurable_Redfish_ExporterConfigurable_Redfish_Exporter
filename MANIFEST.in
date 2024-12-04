@@ -1,0 +1,3 @@
+include src/redfish_collector/logging/*
+include src/redfish_collector/core/templates/configs/*
+include src/redfish_collector/core/templates/schemas/*

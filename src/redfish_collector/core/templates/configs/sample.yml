@@ -2,7 +2,7 @@ Metrics:
   - Name: PhysicalServer_State
     Description: 'physical server state status'
     Type: Gauge
-    Label: ["ServerAddress","HostName","Model", "Manufacturer", "SerialNumber", "SKU", "TotalSystemMemoryGiB", "IndicatorLED", "BiosVersion"]
+    Label: ["ServerAddress","HostName","Model", "Manufacturer", "SerialNumber", "SKU", "TotalSystemMemoryGiB", "IndicatorLED", "BiosVersion", "PowerState"]
     Datapoint: Common
     Result: State
     StatusCode:
@@ -70,11 +70,11 @@ Metrics:
       WARNING: 1
       CRITICAL: 2
       UNKNOWN: 99
-  - Name: PhysicalServer_NetworkInterfaceStatus
+  - Name: PhysicalServer_EthernetInterfaceStatus
     Description: 'physical server interface network status'
     Type: Gauge
     Label: ["ServerAddress","HostName","MACAddress","SpeedMbps"]
-    Datapoint: NetworkInterface
+    Datapoint: EthernetInterface
     Result: State
     StatusCode:
       ENABLED: 0
@@ -84,11 +84,11 @@ Metrics:
       UNKNOWN: 99
       STANDBYOFFLINE: 2
       OFFLINE: 2
-  - Name: PhysicalServer_NetworkInterfaceHealth
+  - Name: PhysicalServer_EthernetInterfaceHealth
     Description: 'physical server interface network health'
     Type: Gauge
     Label: ["ServerAddress","HostName","MACAddress","SpeedMbps"]
-    Datapoint: NetworkInterface
+    Datapoint: EthernetInterface
     Result: Health
     StatusCode:
       OK: 0
